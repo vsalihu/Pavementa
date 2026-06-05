@@ -2,7 +2,7 @@
 
 The Pavementa frontend is a premium civic-tech SaaS interface for road infrastructure intelligence. It provides the application foundation for dashboards, image intake, reports, map planning, and organisation settings.
 
-Stage 4 connects the upload page to the FastAPI image upload endpoint. AI detection, persistence, authentication, and real maps remain deferred.
+Stage 5 connects the upload page to the FastAPI prototype YOLO detection endpoint. Persistence, authentication, real maps, and custom road-damage model training remain deferred.
 
 ## Technology
 
@@ -68,7 +68,7 @@ frontend/
 
 - `/` landing page
 - `/dashboard` operational dashboard
-- `/upload` image upload UI connected to FastAPI
+- `/upload` image upload and prototype detection UI connected to FastAPI
 - `/reports` mock damage report registry
 - `/map` placeholder GIS map page
 - `/settings` organisation settings mock
@@ -76,4 +76,3 @@ frontend/
 ## Environment
 
 - `NEXT_PUBLIC_API_URL` controls the FastAPI backend URL used by uploads
-
