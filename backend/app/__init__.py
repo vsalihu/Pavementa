@@ -1,0 +1,2 @@
+"""Pavementa backend application package."""
+
