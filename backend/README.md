@@ -11,8 +11,12 @@ This stage only provides the production-oriented FastAPI foundation:
 - CORS support for the local frontend
 - Root service metadata endpoint
 - Health check endpoint
+- Road image upload endpoint
+- Static serving for uploaded images
+- Prototype YOLO detection endpoint
+- Original and annotated detection image storage
 
-Database access, authentication, AI model integration, uploads, and map features are intentionally deferred to later development stages.
+Database access, authentication, custom road-damage model training, and map features are intentionally deferred to later development stages.
 
 ## Requirements
 
@@ -67,3 +71,13 @@ The API will be available at:
   "status": "healthy"
 }
 ```
+
+`POST /api/uploads/image`
+
+Accepts one multipart form field named `file`. Supported image formats are JPG, JPEG, PNG, and WEBP, with a maximum size of 10MB. Uploaded files are stored in `uploads/images/` and served from `/uploads/images/{filename}`.
+
+`POST /api/detections/analyse-image`
+
+Accepts one multipart form field named `file`. The image is stored in `uploads/detections/original/`, analysed with a lightweight pretrained YOLO model, and an annotated image is stored in `uploads/detections/annotated/`.
+
+This is prototype detection mode: it uses a general pretrained model before road-damage fine-tuning. The response includes `analysis_mode` and `model_name` so the frontend can clearly label the result. It is intended to prove the architecture and UI workflow, not to provide production pothole or crack detection.

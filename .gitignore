@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.local.example
 
 # Node.js
 node_modules/
@@ -63,6 +64,14 @@ temp/
 *.tmp
 *.log
 
+# Runtime uploads
+backend/uploads/images/*
+!backend/uploads/images/.gitkeep
+backend/uploads/detections/original/*
+!backend/uploads/detections/original/.gitkeep
+backend/uploads/detections/annotated/*
+!backend/uploads/detections/annotated/.gitkeep
+
 # VS Code
 .vscode/
 !.vscode/extensions.json
@@ -70,4 +79,3 @@ temp/
 # OS files
 .DS_Store
 Thumbs.db
-

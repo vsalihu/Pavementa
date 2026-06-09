@@ -1,9 +1,13 @@
 """Application settings loaded from environment variables."""
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import AnyHttpUrl, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -22,6 +26,11 @@ class Settings(BaseSettings):
     storage_bucket: str = ""
     jwt_secret: str = ""
     ai_model_path: str = ""
+    upload_dir: Path = BASE_DIR / "uploads" / "images"
+    detection_original_dir: Path = BASE_DIR / "uploads" / "detections" / "original"
+    detection_annotated_dir: Path = BASE_DIR / "uploads" / "detections" / "annotated"
+    yolo_model_name: str = "yolov8n.pt"
+    max_upload_size_bytes: int = 10 * 1024 * 1024
 
     log_level: str = "INFO"
     cors_origins: list[str] = ["http://localhost:3000"]

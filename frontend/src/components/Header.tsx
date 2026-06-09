@@ -16,6 +16,10 @@ const pageTitles: Record<string, { title: string; eyebrow: string }> = {
     title: "Image Intake",
     eyebrow: "Prepare road imagery for AI review",
   },
+  "/results": {
+    title: "Detection Results",
+    eyebrow: "Prototype analysis review",
+  },
   "/reports": {
     title: "Damage Reports",
     eyebrow: "Inspection records and council-ready outputs",
@@ -64,4 +68,3 @@ export function Header() {
     </header>
   );
 }
-

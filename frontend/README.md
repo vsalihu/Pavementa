@@ -69,6 +69,7 @@ frontend/
 - `/` landing page
 - `/dashboard` operational dashboard
 - `/upload` image upload and prototype detection UI connected to FastAPI
+- `/results` detection results review workspace
 - `/reports` mock damage report registry
 - `/map` placeholder GIS map page
 - `/settings` organisation settings mock

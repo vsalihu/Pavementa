@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
@@ -14,7 +15,10 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
-import { SeverityBadge } from "@/components/SeverityBadge";
+import {
+  DETECTION_RESULT_STORAGE_KEY,
+  type DetectionResult,
+} from "@/lib/detection-result";
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -27,25 +31,6 @@ type UploadResponse = {
   size_bytes: number;
 };
 
-type DetectionResponse = {
-  message: string;
-  mode: string;
-  note: string;
-  original_image_url: string;
-  annotated_image_url: string;
-  detections: Array<{
-    label: string;
-    confidence: number;
-    box: { x1: number; y1: number; x2: number; y2: number };
-    severity: "low" | "medium" | "high";
-  }>;
-  summary: {
-    total_detections: number;
-    highest_confidence: number;
-    overall_severity: "low" | "medium" | "high";
-  };
-};
-
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) {
     return `${(bytes / 1024).toFixed(1)} KB`;
@@ -55,6 +40,7 @@ function formatBytes(bytes: number) {
 }
 
 export default function UploadPage() {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const previewUrlRef = useRef<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -65,8 +51,6 @@ export default function UploadPage() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<UploadResponse | null>(null);
-  const [detectionResult, setDetectionResult] =
-    useState<DetectionResponse | null>(null);
 
   const apiUrl = useMemo(
     () => process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
@@ -100,7 +84,6 @@ export default function UploadPage() {
   function validateAndSelectFile(file: File) {
     setError(null);
     setUploadResult(null);
-    setDetectionResult(null);
     setProgress(0);
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -185,7 +168,6 @@ export default function UploadPage() {
   }
 
   function uploadImage() {
-    setDetectionResult(null);
     sendImageRequest<UploadResponse>({
       endpoint: "/api/uploads/image",
       setLoading: setIsUploading,
@@ -195,10 +177,16 @@ export default function UploadPage() {
 
   function analyseImage() {
     setUploadResult(null);
-    sendImageRequest<DetectionResponse>({
+    sendImageRequest<DetectionResult>({
       endpoint: "/api/detections/analyse-image",
       setLoading: setIsAnalysing,
-      onComplete: setDetectionResult,
+      onComplete: (response) => {
+        sessionStorage.setItem(
+          DETECTION_RESULT_STORAGE_KEY,
+          JSON.stringify(response)
+        );
+        router.push("/results");
+      },
     });
   }
 
@@ -419,117 +407,6 @@ export default function UploadPage() {
         </Card>
       </div>
 
-      {detectionResult ? (
-        <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.8fr]">
-          <Card className="p-6">
-            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-center">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-950">
-                  Detection review
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {detectionResult.note}
-                </p>
-              </div>
-              <SeverityBadge
-                severity={detectionResult.summary.overall_severity}
-              />
-            </div>
-
-            <div className="mt-6 grid gap-5 lg:grid-cols-2">
-              <div>
-                <p className="mb-3 text-sm font-semibold text-slate-700">
-                  Original image
-                </p>
-                <div className="relative aspect-[16/10] overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                  <Image
-                    alt="Original uploaded detection image"
-                    className="object-cover"
-                    fill
-                    src={detectionResult.original_image_url}
-                    unoptimized
-                  />
-                </div>
-              </div>
-              <div>
-                <p className="mb-3 text-sm font-semibold text-slate-700">
-                  Annotated image
-                </p>
-                <div className="relative aspect-[16/10] overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                  <Image
-                    alt="Annotated YOLO detection image"
-                    className="object-cover"
-                    fill
-                    src={detectionResult.annotated_image_url}
-                    unoptimized
-                  />
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-slate-950">
-              Detection summary
-            </h2>
-            <div className="mt-5 grid grid-cols-3 gap-3">
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-500">Total</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">
-                  {detectionResult.summary.total_detections}
-                </p>
-              </div>
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-500">Highest</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">
-                  {(detectionResult.summary.highest_confidence * 100).toFixed(0)}
-                  %
-                </p>
-              </div>
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <p className="text-xs font-semibold text-slate-500">Severity</p>
-                <div className="mt-2">
-                  <SeverityBadge
-                    severity={detectionResult.summary.overall_severity}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              {detectionResult.detections.length > 0 ? (
-                detectionResult.detections.map((item, index) => (
-                  <div
-                    className="rounded-md border border-slate-200 p-4"
-                    key={`${item.label}-${index}`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold capitalize text-slate-950">
-                          {item.label}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          Confidence {(item.confidence * 100).toFixed(0)}%
-                        </p>
-                      </div>
-                      <SeverityBadge severity={item.severity} />
-                    </div>
-                    <p className="mt-3 text-xs text-slate-500">
-                      Box: x1 {item.box.x1}, y1 {item.box.y1}, x2 {item.box.x2},
-                      y2 {item.box.y2}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                  No objects were detected by the prototype model in this image.
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
-      ) : null}
     </AppShell>
   );
 }
-

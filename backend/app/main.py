@@ -6,8 +6,11 @@ from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
+from app.api.detections import router as detections_router
 from app.api.routes import router
+from app.api.uploads import router as uploads_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 
@@ -43,4 +46,9 @@ app.add_middleware(
 )
 
 app.include_router(router)
-
+app.include_router(uploads_router)
+app.include_router(detections_router)
+settings.upload_dir.mkdir(parents=True, exist_ok=True)
+settings.detection_original_dir.mkdir(parents=True, exist_ok=True)
+settings.detection_annotated_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.upload_dir.parent), name="uploads")
