@@ -70,7 +70,8 @@ frontend/
 - `/dashboard` operational dashboard
 - `/upload` image upload and prototype detection UI connected to FastAPI
 - `/results` detection results review workspace
-- `/reports` mock damage report registry
+- `/reports` searchable Damage Registry backed by the API
+- `/reports/[publicId]` detailed official infrastructure report view
 - `/map` placeholder GIS map page
 - `/settings` organisation settings mock
 

@@ -111,7 +111,12 @@ Persists a detection analysis response as a road damage report. Optional title, 
 
 `GET /api/reports`
 
-Returns saved reports in newest-first order.
+Returns saved reports with optional query parameters:
+
+- `search`
+- `severity`
+- `status`
+- `sort`: `newest`, `oldest`, `road_health_asc`, `road_health_desc`
 
 `GET /api/reports/{public_id}`
 

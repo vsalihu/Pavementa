@@ -38,6 +38,66 @@ export type ReportRead = ReportListItem & {
   }>;
 };
 
+export type ReportSortValue =
+  | "newest"
+  | "oldest"
+  | "road_health_asc"
+  | "road_health_desc";
+
+export function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+export function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+export function formatStatus(value: string) {
+  return value === "all" ? "all" : value.replaceAll("_", " ");
+}
+
+export function formatConfidence(confidence: number) {
+  return `${(confidence * 100).toFixed(0)}%`;
+}
+
+export function getCaseRecommendation(report: ReportRead) {
+  if (report.detections.length === 0) {
+    return {
+      priority: "No action required",
+      action: "Keep the record for audit history and continue routine monitoring.",
+    };
+  }
+
+  if (report.overall_severity === "critical" || report.overall_severity === "high") {
+    return {
+      priority: "Urgent inspection",
+      action: "Assign an inspector or contractor to verify the issue and prioritise repair planning.",
+    };
+  }
+
+  if (report.overall_severity === "medium") {
+    return {
+      priority: "Scheduled review",
+      action: "Add this location to the next inspection cycle and compare against network priorities.",
+    };
+  }
+
+  return {
+    priority: "Monitor",
+    action: "Retain the report and monitor during routine road condition checks.",
+  };
+}
+
 export function buildReportPayload(
   result: DetectionResult,
   form: ReportSaveForm
