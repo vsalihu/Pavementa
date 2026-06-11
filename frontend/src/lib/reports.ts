@@ -15,6 +15,7 @@ export type ReportListItem = {
   longitude: number | null;
   status: string;
   priority: "low" | "medium" | "high" | "urgent";
+  source: "internal" | "citizen";
   assigned_to: string | null;
   reviewed_by: string | null;
   scheduled_repair_date: string | null;
@@ -30,6 +31,9 @@ export type ReportRead = ReportListItem & {
   original_image_url: string;
   annotated_image_url: string;
   review_notes: string | null;
+  citizen_name: string | null;
+  citizen_email: string | null;
+  citizen_description: string | null;
   updated_at: string;
   detections: Array<{
     id: number;

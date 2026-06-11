@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 AllowedStatus = Literal["open", "under_review", "scheduled", "resolved", "rejected"]
 AllowedPriority = Literal["low", "medium", "high", "urgent"]
+AllowedSource = Literal["internal", "citizen"]
 
 
 class DetectionBoxInput(BaseModel):
@@ -34,6 +35,12 @@ class ReportCreate(BaseModel):
     location_name: str | None = None
     latitude: float | None = None
     longitude: float | None = None
+    status: AllowedStatus = "open"
+    priority: AllowedPriority | None = None
+    source: AllowedSource = "internal"
+    citizen_name: str | None = None
+    citizen_email: str | None = None
+    citizen_description: str | None = None
     original_image_url: str
     annotated_image_url: str
     analysis_mode: str = "prototype"
@@ -99,6 +106,7 @@ class ReportListItem(BaseModel):
     longitude: float | None
     status: str
     priority: str
+    source: str
     assigned_to: str | None
     reviewed_by: str | None
     scheduled_repair_date: datetime | None
@@ -118,6 +126,9 @@ class ReportRead(ReportListItem):
     original_image_url: str
     annotated_image_url: str
     review_notes: str | None
+    citizen_name: str | None
+    citizen_email: str | None
+    citizen_description: str | None
     updated_at: datetime
     detections: list[DetectionRead]
     case_events: list[CaseEventRead]

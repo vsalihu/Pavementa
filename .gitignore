@@ -45,6 +45,8 @@ htmlcov/
 *.pkl
 *.joblib
 models/
+!backend/app/models/
+!backend/app/models/*.py
 checkpoints/
 runs/
 

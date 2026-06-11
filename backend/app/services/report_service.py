@@ -32,6 +32,20 @@ def derive_overall_severity(detections: list) -> str:
     return "low"
 
 
+def derive_priority(overall_severity: str, requested_priority: str | None) -> str:
+    """Use supplied priority or derive a first-pass case priority from severity."""
+    if requested_priority:
+        return requested_priority
+
+    severity_priority = {
+        "critical": "urgent",
+        "high": "high",
+        "medium": "medium",
+        "low": "low",
+    }
+    return severity_priority.get(overall_severity, "medium")
+
+
 def generate_public_id(db: Session) -> str:
     """Generate a readable public report identifier such as PAV-2026-0001."""
     year = datetime.now(UTC).year
@@ -44,15 +58,20 @@ def generate_public_id(db: Session) -> str:
 
 def create_report(db: Session, payload: ReportCreate) -> Report:
     """Persist a report and its detections."""
+    overall_severity = derive_overall_severity(payload.detections)
     report = Report(
         public_id=generate_public_id(db),
         title=payload.title or "Road damage analysis report",
         location_name=payload.location_name,
         latitude=payload.latitude,
         longitude=payload.longitude,
-        status="open",
-        priority="medium",
-        overall_severity=derive_overall_severity(payload.detections),
+        status=payload.status,
+        priority=derive_priority(overall_severity, payload.priority),
+        source=payload.source,
+        citizen_name=payload.citizen_name,
+        citizen_email=payload.citizen_email,
+        citizen_description=payload.citizen_description,
+        overall_severity=overall_severity,
         road_health_score=calculate_road_health_score(payload.detections),
         original_image_url=payload.original_image_url,
         annotated_image_url=payload.annotated_image_url,
