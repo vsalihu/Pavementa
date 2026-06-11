@@ -68,6 +68,7 @@ frontend/
 
 - `/` landing page
 - `/dashboard` operational dashboard
+- `/dashboard` uses live analytics from `GET /api/analytics/summary`
 - `/upload` image upload and prototype detection UI connected to FastAPI
 - `/results` detection results review workspace
 - `/reports` searchable Damage Registry backed by the API

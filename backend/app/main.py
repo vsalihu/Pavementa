@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.api.analytics import router as analytics_router
 from app.api.detections import router as detections_router
 from app.api.reports import router as reports_router
 from app.api.routes import router
@@ -50,6 +51,7 @@ app.include_router(router)
 app.include_router(uploads_router)
 app.include_router(detections_router)
 app.include_router(reports_router)
+app.include_router(analytics_router)
 settings.upload_dir.mkdir(parents=True, exist_ok=True)
 settings.detection_original_dir.mkdir(parents=True, exist_ok=True)
 settings.detection_annotated_dir.mkdir(parents=True, exist_ok=True)

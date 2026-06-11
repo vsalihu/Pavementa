@@ -130,6 +130,10 @@ Updates case-management fields including status, priority, assignment, reviewer,
 
 Adds a manual case note to the report timeline.
 
+`GET /api/analytics/summary`
+
+Returns council-level dashboard metrics including report totals, case counts, severity/status/priority breakdowns, recent reports, and highest-risk reports.
+
 `GET /api/reports/{public_id}/export/pdf`
 
 Downloads a council-ready PDF report generated with ReportLab.
