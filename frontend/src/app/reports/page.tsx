@@ -11,7 +11,7 @@ import type { ReportListItem, ReportSortValue } from "@/lib/reports";
 import { formatDate, formatStatus } from "@/lib/reports";
 
 const severityOptions = ["all", "critical", "high", "medium", "low"];
-const statusOptions = ["all", "pending_review", "assigned", "closed"];
+const statusOptions = ["all", "open", "under_review", "scheduled", "resolved", "rejected"];
 const sortOptions: Array<{ label: string; value: ReportSortValue }> = [
   { label: "Newest", value: "newest" },
   { label: "Oldest", value: "oldest" },
@@ -220,12 +220,13 @@ export default function ReportsPage() {
 
           {!isLoading && !error && reports.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] text-left text-sm">
+              <table className="w-full min-w-[1040px] text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                   <tr>
                     <th className="px-6 py-4">Public ID</th>
                     <th className="px-6 py-4">Location</th>
                     <th className="px-6 py-4">Severity</th>
+                    <th className="px-6 py-4">Priority</th>
                     <th className="px-6 py-4">Road health</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Created</th>
@@ -248,6 +249,9 @@ export default function ReportsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <SeverityBadge severity={report.overall_severity} />
+                      </td>
+                      <td className="px-6 py-4 capitalize text-slate-700">
+                        {report.priority}
                       </td>
                       <td className="px-6 py-4 text-slate-700">
                         {report.road_health_score.toFixed(1)}

@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models.report import Detection, Report
-from app.schemas.report import ReportCreate
+from app.models.report import CaseEvent, Detection, Report
+from app.schemas.report import CaseEventCreate, ReportCreate, ReportUpdate
 
 
 def calculate_road_health_score(detections: list) -> float:
@@ -50,7 +50,8 @@ def create_report(db: Session, payload: ReportCreate) -> Report:
         location_name=payload.location_name,
         latitude=payload.latitude,
         longitude=payload.longitude,
-        status="pending_review",
+        status="open",
+        priority="medium",
         overall_severity=derive_overall_severity(payload.detections),
         road_health_score=calculate_road_health_score(payload.detections),
         original_image_url=payload.original_image_url,
@@ -77,3 +78,69 @@ def create_report(db: Session, payload: ReportCreate) -> Report:
     db.refresh(report)
     return report
 
+
+def add_case_event(
+    db: Session,
+    report: Report,
+    event_type: str,
+    message: str,
+    created_by: str | None = None,
+) -> CaseEvent:
+    """Create a timeline event for a report case."""
+    event = CaseEvent(
+        report=report,
+        event_type=event_type,
+        message=message,
+        created_by=created_by,
+    )
+    db.add(event)
+    return event
+
+
+def update_report_case(db: Session, report: Report, payload: ReportUpdate) -> Report:
+    """Update case-management fields and add automatic timeline events."""
+    update_data = payload.model_dump(exclude_unset=True)
+
+    if "status" in update_data and update_data["status"] != report.status:
+        add_case_event(
+            db,
+            report,
+            "status_changed",
+            f"Status changed from {report.status} to {update_data['status']}",
+            update_data.get("reviewed_by"),
+        )
+
+    if "priority" in update_data and update_data["priority"] != report.priority:
+        add_case_event(
+            db,
+            report,
+            "priority_changed",
+            f"Priority changed from {report.priority} to {update_data['priority']}",
+            update_data.get("reviewed_by"),
+        )
+
+    for field, value in update_data.items():
+        setattr(report, field, value)
+
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+    return report
+
+
+def create_manual_case_event(
+    db: Session,
+    report: Report,
+    payload: CaseEventCreate,
+) -> CaseEvent:
+    """Add a manual case note to the report timeline."""
+    event = add_case_event(
+        db,
+        report,
+        payload.event_type,
+        payload.message,
+        payload.created_by,
+    )
+    db.commit()
+    db.refresh(event)
+    return event

@@ -122,6 +122,14 @@ Returns saved reports with optional query parameters:
 
 Returns one saved report with its detections.
 
+`PATCH /api/reports/{public_id}`
+
+Updates case-management fields including status, priority, assignment, reviewer, notes, scheduled repair date, and resolution time. Status and priority changes create automatic case timeline events.
+
+`POST /api/reports/{public_id}/events`
+
+Adds a manual case note to the report timeline.
+
 `GET /api/reports/{public_id}/export/pdf`
 
 Downloads a council-ready PDF report generated with ReportLab.

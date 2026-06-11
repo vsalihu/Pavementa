@@ -1,8 +1,12 @@
 """Pydantic schemas for reports and persisted detections."""
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+AllowedStatus = Literal["open", "under_review", "scheduled", "resolved", "rejected"]
+AllowedPriority = Literal["low", "medium", "high", "urgent"]
 
 
 class DetectionBoxInput(BaseModel):
@@ -37,6 +41,38 @@ class ReportCreate(BaseModel):
     detections: list[DetectionCreate] = Field(default_factory=list)
 
 
+class ReportUpdate(BaseModel):
+    """Case management fields that can be updated on a report."""
+
+    status: AllowedStatus | None = None
+    priority: AllowedPriority | None = None
+    assigned_to: str | None = None
+    reviewed_by: str | None = None
+    review_notes: str | None = None
+    scheduled_repair_date: datetime | None = None
+    resolved_at: datetime | None = None
+
+
+class CaseEventCreate(BaseModel):
+    """Manual timeline note for a report case."""
+
+    message: str
+    created_by: str | None = None
+    event_type: str = "manual_note"
+
+
+class CaseEventRead(BaseModel):
+    """Timeline event returned with report details."""
+
+    id: int
+    event_type: str
+    message: str
+    created_by: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class DetectionRead(BaseModel):
     """Detection record returned by report APIs."""
 
@@ -62,6 +98,11 @@ class ReportListItem(BaseModel):
     latitude: float | None
     longitude: float | None
     status: str
+    priority: str
+    assigned_to: str | None
+    reviewed_by: str | None
+    scheduled_repair_date: datetime | None
+    resolved_at: datetime | None
     overall_severity: str
     road_health_score: float
     analysis_mode: str
@@ -76,7 +117,9 @@ class ReportRead(ReportListItem):
 
     original_image_url: str
     annotated_image_url: str
+    review_notes: str | None
     updated_at: datetime
     detections: list[DetectionRead]
+    case_events: list[CaseEventRead]
 
     model_config = {"from_attributes": True}

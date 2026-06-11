@@ -14,6 +14,11 @@ export type ReportListItem = {
   latitude: number | null;
   longitude: number | null;
   status: string;
+  priority: "low" | "medium" | "high" | "urgent";
+  assigned_to: string | null;
+  reviewed_by: string | null;
+  scheduled_repair_date: string | null;
+  resolved_at: string | null;
   overall_severity: "low" | "medium" | "high" | "critical";
   road_health_score: number;
   analysis_mode: string;
@@ -24,6 +29,7 @@ export type ReportListItem = {
 export type ReportRead = ReportListItem & {
   original_image_url: string;
   annotated_image_url: string;
+  review_notes: string | null;
   updated_at: string;
   detections: Array<{
     id: number;
@@ -36,6 +42,23 @@ export type ReportRead = ReportListItem & {
     y2: number;
     created_at: string;
   }>;
+  case_events: Array<{
+    id: number;
+    event_type: string;
+    message: string;
+    created_by: string | null;
+    created_at: string;
+  }>;
+};
+
+export type ReportCaseUpdate = {
+  status?: string;
+  priority?: string;
+  assigned_to?: string | null;
+  reviewed_by?: string | null;
+  review_notes?: string | null;
+  scheduled_repair_date?: string | null;
+  resolved_at?: string | null;
 };
 
 export type ReportSortValue =

@@ -10,6 +10,8 @@ import {
   Download,
   FileSpreadsheet,
   MapPin,
+  PlusCircle,
+  Save,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
@@ -22,11 +24,29 @@ import {
   formatDateTime,
   formatStatus,
   getCaseRecommendation,
+  type ReportCaseUpdate,
 } from "@/lib/reports";
 
 type ReportDetailPageProps = {
   params: Promise<{ publicId: string }>;
 };
+
+const statusOptions = ["open", "under_review", "scheduled", "resolved", "rejected"];
+const priorityOptions = ["low", "medium", "high", "urgent"];
+
+function toDateInputValue(value: string | null) {
+  if (!value) {
+    return "";
+  }
+  return value.slice(0, 10);
+}
+
+function toDateTimeInputValue(value: string | null) {
+  if (!value) {
+    return "";
+  }
+  return value.slice(0, 16);
+}
 
 export default function ReportDetailPage({ params }: ReportDetailPageProps) {
   const { publicId } = use(params);
@@ -39,38 +59,67 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"pdf" | "csv" | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [caseForm, setCaseForm] = useState({
+    status: "open",
+    priority: "medium",
+    assigned_to: "",
+    reviewed_by: "",
+    review_notes: "",
+    scheduled_repair_date: "",
+    resolved_at: "",
+  });
+  const [noteForm, setNoteForm] = useState({ message: "", created_by: "" });
+  const [isSavingCase, setIsSavingCase] = useState(false);
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [caseMessage, setCaseMessage] = useState<string | null>(null);
+  const [caseError, setCaseError] = useState<string | null>(null);
+
+  function applyReportState(data: ReportRead) {
+    setReport(data);
+    setCaseForm({
+      status: data.status,
+      priority: data.priority,
+      assigned_to: data.assigned_to ?? "",
+      reviewed_by: data.reviewed_by ?? "",
+      review_notes: data.review_notes ?? "",
+      scheduled_repair_date: toDateInputValue(data.scheduled_repair_date),
+      resolved_at: toDateTimeInputValue(data.resolved_at),
+    });
+  }
+
+  async function loadReport() {
+    setError(null);
+
+    try {
+      const response = await fetch(
+        `${apiUrl.replace(/\/$/, "")}/api/reports/${publicId}`
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail ?? "Could not load report.");
+      }
+
+      applyReportState(data);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Could not load report. Check the backend connection."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      async function loadReport() {
-        setError(null);
-
-        try {
-          const response = await fetch(
-            `${apiUrl.replace(/\/$/, "")}/api/reports/${publicId}`
-          );
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.detail ?? "Could not load report.");
-          }
-
-          setReport(data);
-        } catch (loadError) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Could not load report. Check the backend connection."
-          );
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
       void loadReport();
     }, 0);
 
     return () => window.clearTimeout(timeout);
+    // loadReport intentionally closes over publicId/apiUrl.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiUrl, publicId]);
 
   if (isLoading) {
@@ -142,6 +191,94 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
       );
     } finally {
       setExporting(null);
+    }
+  }
+
+  async function saveCaseUpdates() {
+    if (!report) {
+      return;
+    }
+
+    setIsSavingCase(true);
+    setCaseError(null);
+    setCaseMessage(null);
+
+    const payload: ReportCaseUpdate = {
+      status: caseForm.status,
+      priority: caseForm.priority,
+      assigned_to: caseForm.assigned_to.trim() || null,
+      reviewed_by: caseForm.reviewed_by.trim() || null,
+      review_notes: caseForm.review_notes.trim() || null,
+      scheduled_repair_date: caseForm.scheduled_repair_date
+        ? `${caseForm.scheduled_repair_date}T00:00:00`
+        : null,
+      resolved_at: caseForm.resolved_at
+        ? new Date(caseForm.resolved_at).toISOString()
+        : null,
+    };
+
+    try {
+      const response = await fetch(
+        `${apiUrl.replace(/\/$/, "")}/api/reports/${report.public_id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail ?? "Could not save case updates.");
+      }
+      applyReportState(data);
+      setCaseMessage("Case updates saved successfully.");
+    } catch (saveError) {
+      setCaseError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Could not save case updates."
+      );
+    } finally {
+      setIsSavingCase(false);
+    }
+  }
+
+  async function addCaseNote() {
+    if (!report || !noteForm.message.trim()) {
+      setCaseError("Enter a case note before adding it to the timeline.");
+      return;
+    }
+
+    setIsAddingNote(true);
+    setCaseError(null);
+    setCaseMessage(null);
+
+    try {
+      const response = await fetch(
+        `${apiUrl.replace(/\/$/, "")}/api/reports/${report.public_id}/events`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_type: "manual_note",
+            message: noteForm.message.trim(),
+            created_by: noteForm.created_by.trim() || null,
+          }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail ?? "Could not add case note.");
+      }
+      setNoteForm({ message: "", created_by: "" });
+      setCaseMessage("Case note added to timeline.");
+      await loadReport();
+    } catch (noteError) {
+      setCaseError(
+        noteError instanceof Error ? noteError.message : "Could not add case note."
+      );
+    } finally {
+      setIsAddingNote(false);
     }
   }
 
@@ -259,6 +396,214 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 {recommendation.action}
               </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">
+                Case Management
+              </h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Manage official case status, ownership, review notes, repair
+                scheduling, and timeline history.
+              </p>
+            </div>
+            <Button
+              disabled={isSavingCase}
+              onClick={() => {
+                void saveCaseUpdates();
+              }}
+            >
+              <Save aria-hidden="true" className="h-4 w-4" />
+              {isSavingCase ? "Saving updates" : "Save case updates"}
+            </Button>
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Status</span>
+              <select
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm capitalize"
+                onChange={(event) =>
+                  setCaseForm((current) => ({ ...current, status: event.target.value }))
+                }
+                value={caseForm.status}
+              >
+                {statusOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {formatStatus(option)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Priority</span>
+              <select
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm capitalize"
+                onChange={(event) =>
+                  setCaseForm((current) => ({ ...current, priority: event.target.value }))
+                }
+                value={caseForm.priority}
+              >
+                {priorityOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Assigned to</span>
+              <input
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                onChange={(event) =>
+                  setCaseForm((current) => ({ ...current, assigned_to: event.target.value }))
+                }
+                placeholder="Officer or contractor name"
+                value={caseForm.assigned_to}
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Reviewed by</span>
+              <input
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                onChange={(event) =>
+                  setCaseForm((current) => ({ ...current, reviewed_by: event.target.value }))
+                }
+                placeholder="Authorised reviewer"
+                value={caseForm.reviewed_by}
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">
+                Scheduled repair date
+              </span>
+              <input
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                onChange={(event) =>
+                  setCaseForm((current) => ({
+                    ...current,
+                    scheduled_repair_date: event.target.value,
+                  }))
+                }
+                type="date"
+                value={caseForm.scheduled_repair_date}
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Resolved at</span>
+              <input
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                onChange={(event) =>
+                  setCaseForm((current) => ({ ...current, resolved_at: event.target.value }))
+                }
+                type="datetime-local"
+                value={caseForm.resolved_at}
+              />
+            </label>
+            <label className="block lg:col-span-2">
+              <span className="text-sm font-semibold text-slate-700">Review notes</span>
+              <textarea
+                className="mt-2 min-h-28 w-full rounded-md border border-slate-200 px-3 py-3 text-sm"
+                onChange={(event) =>
+                  setCaseForm((current) => ({ ...current, review_notes: event.target.value }))
+                }
+                placeholder="Operational notes, review outcome, or repair context"
+                value={caseForm.review_notes}
+              />
+            </label>
+          </div>
+
+          {caseMessage ? (
+            <div className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+              {caseMessage}
+            </div>
+          ) : null}
+          {caseError ? (
+            <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              {caseError}
+            </div>
+          ) : null}
+
+          <div className="mt-8 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+            <div>
+              <h4 className="text-base font-semibold text-slate-950">
+                Add case note
+              </h4>
+              <div className="mt-4 space-y-4">
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Note message
+                  </span>
+                  <textarea
+                    className="mt-2 min-h-28 w-full rounded-md border border-slate-200 px-3 py-3 text-sm"
+                    onChange={(event) =>
+                      setNoteForm((current) => ({ ...current, message: event.target.value }))
+                    }
+                    placeholder="Add an official case note"
+                    value={noteForm.message}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">Created by</span>
+                  <input
+                    className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                    onChange={(event) =>
+                      setNoteForm((current) => ({ ...current, created_by: event.target.value }))
+                    }
+                    placeholder="Officer name"
+                    value={noteForm.created_by}
+                  />
+                </label>
+                <Button
+                  disabled={isAddingNote}
+                  onClick={() => {
+                    void addCaseNote();
+                  }}
+                  variant="secondary"
+                >
+                  <PlusCircle aria-hidden="true" className="h-4 w-4" />
+                  {isAddingNote ? "Adding note" : "Add case note"}
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-base font-semibold text-slate-950">
+                Case timeline
+              </h4>
+              <div className="mt-4 space-y-3">
+                {report.case_events.length > 0 ? (
+                  report.case_events.map((event) => (
+                    <div
+                      className="rounded-md border border-slate-200 bg-white p-4"
+                      key={event.id}
+                    >
+                      <div className="flex flex-col justify-between gap-2 sm:flex-row">
+                        <p className="text-sm font-semibold capitalize text-slate-950">
+                          {formatStatus(event.event_type)}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatDateTime(event.created_at)}
+                        </p>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {event.message}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-500">
+                        Created by {event.created_by ?? "System"}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    No case events have been recorded yet.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </Card>

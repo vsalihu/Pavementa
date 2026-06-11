@@ -9,9 +9,20 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
 from app.models.report import Report
-from app.schemas.report import ReportCreate, ReportListItem, ReportRead
+from app.schemas.report import (
+    CaseEventCreate,
+    CaseEventRead,
+    ReportCreate,
+    ReportListItem,
+    ReportRead,
+    ReportUpdate,
+)
 from app.services.export_service import build_csv_report, build_pdf_report
-from app.services.report_service import create_report
+from app.services.report_service import (
+    create_manual_case_event,
+    create_report,
+    update_report_case,
+)
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -21,7 +32,7 @@ def fetch_report_or_404(public_id: str, db: Session) -> Report:
     report = db.scalar(
         select(Report)
         .where(Report.public_id == public_id)
-        .options(selectinload(Report.detections))
+        .options(selectinload(Report.detections), selectinload(Report.case_events))
     )
     if report is None:
         raise HTTPException(
@@ -78,6 +89,32 @@ def list_reports(
 def get_report(public_id: str, db: Session = Depends(get_db)) -> Report:
     """Return one report and its detections by public identifier."""
     return fetch_report_or_404(public_id, db)
+
+
+@router.patch("/{public_id}", response_model=ReportRead)
+def update_report(
+    public_id: str,
+    payload: ReportUpdate,
+    db: Session = Depends(get_db),
+) -> Report:
+    """Update case-management fields on a report."""
+    report = fetch_report_or_404(public_id, db)
+    return update_report_case(db, report, payload)
+
+
+@router.post(
+    "/{public_id}/events",
+    response_model=CaseEventRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_report_event(
+    public_id: str,
+    payload: CaseEventCreate,
+    db: Session = Depends(get_db),
+):
+    """Add a manual case note to the report timeline."""
+    report = fetch_report_or_404(public_id, db)
+    return create_manual_case_event(db, report, payload)
 
 
 @router.get("/{public_id}/export/pdf")
