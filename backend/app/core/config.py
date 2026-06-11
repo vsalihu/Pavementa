@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     backend_url: AnyHttpUrl = Field(default="http://localhost:8000")
     frontend_url: AnyHttpUrl = Field(default="http://localhost:3000")
 
-    database_url: str = ""
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/pavementa"
     mapbox_token: str = ""
     storage_bucket: str = ""
     jwt_secret: str = ""

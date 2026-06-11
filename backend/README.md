@@ -37,6 +37,29 @@ pip install -r requirements.txt
 
 Review `.env` and update values as real services are introduced. Application-specific runtime flags use the `APP_` prefix where appropriate to avoid collisions with generic machine-level environment variables.
 
+## Database Setup
+
+Pavementa uses PostgreSQL with SQLAlchemy and Alembic.
+
+Create a local PostgreSQL database named `pavementa`, then confirm `.env` contains a connection string like:
+
+```text
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/pavementa
+```
+
+Run migrations from the `backend` directory:
+
+```powershell
+alembic upgrade head
+```
+
+To create future migrations after model changes:
+
+```powershell
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+```
+
 ## Run
 
 From the `backend` directory:
@@ -81,3 +104,15 @@ Accepts one multipart form field named `file`. Supported image formats are JPG, 
 Accepts one multipart form field named `file`. The image is stored in `uploads/detections/original/`, analysed with a lightweight pretrained YOLO model, and an annotated image is stored in `uploads/detections/annotated/`.
 
 This is prototype detection mode: it uses a general pretrained model before road-damage fine-tuning. The response includes `analysis_mode` and `model_name` so the frontend can clearly label the result. It is intended to prove the architecture and UI workflow, not to provide production pothole or crack detection.
+
+`POST /api/reports`
+
+Persists a detection analysis response as a road damage report. Optional title, location name, latitude, and longitude can be included.
+
+`GET /api/reports`
+
+Returns saved reports in newest-first order.
+
+`GET /api/reports/{public_id}`
+
+Returns one saved report with its detections.

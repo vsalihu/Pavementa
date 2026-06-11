@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.detections import router as detections_router
+from app.api.reports import router as reports_router
 from app.api.routes import router
 from app.api.uploads import router as uploads_router
 from app.core.config import get_settings
@@ -48,6 +49,7 @@ app.add_middleware(
 app.include_router(router)
 app.include_router(uploads_router)
 app.include_router(detections_router)
+app.include_router(reports_router)
 settings.upload_dir.mkdir(parents=True, exist_ok=True)
 settings.detection_original_dir.mkdir(parents=True, exist_ok=True)
 settings.detection_annotated_dir.mkdir(parents=True, exist_ok=True)

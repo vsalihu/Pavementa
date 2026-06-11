@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   Download,
   FileCheck2,
@@ -18,6 +18,11 @@ import {
   DETECTION_RESULT_STORAGE_KEY,
   type DetectionResult,
 } from "@/lib/detection-result";
+import {
+  buildReportPayload,
+  type ReportRead,
+  type ReportSaveForm,
+} from "@/lib/reports";
 
 function subscribe() {
   return () => undefined;
@@ -49,11 +54,58 @@ function formatConfidence(confidence: number) {
 }
 
 export default function ResultsPage() {
+  const apiUrl = useMemo(
+    () => process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
+    []
+  );
+  const [form, setForm] = useState<ReportSaveForm>({
+    title: "",
+    location_name: "",
+    latitude: "",
+    longitude: "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedReport, setSavedReport] = useState<ReportRead | null>(null);
+
   const result = useSyncExternalStore(
     subscribe,
     getStoredDetectionResult,
     getServerSnapshot
   );
+
+  async function saveReport() {
+    if (!result) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+    setSavedReport(null);
+
+    try {
+      const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildReportPayload(result, form)),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail ?? "Report could not be saved.");
+      }
+
+      setSavedReport(data);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "Report could not be saved. Check the backend connection."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   if (!result) {
     return (
@@ -227,13 +279,114 @@ export default function ResultsPage() {
             Suggested next actions
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            These actions are placeholders until reporting, workflow, and
-            persistence are implemented.
+            Save the current analysis as a report, then continue with review or
+            export workflows when those stages are implemented.
           </p>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-4">
+            <div className="lg:col-span-2">
+              <label
+                className="text-sm font-semibold text-slate-700"
+                htmlFor="report-title"
+              >
+                Report title
+              </label>
+              <input
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                id="report-title"
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    title: event.target.value,
+                  }))
+                }
+                placeholder="Example: A41 road surface review"
+                type="text"
+                value={form.title}
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <label
+                className="text-sm font-semibold text-slate-700"
+                htmlFor="location-name"
+              >
+                Location name
+              </label>
+              <input
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                id="location-name"
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    location_name: event.target.value,
+                  }))
+                }
+                placeholder="Example: A41 Northbound, Sector 4"
+                type="text"
+                value={form.location_name}
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <label
+                className="text-sm font-semibold text-slate-700"
+                htmlFor="latitude"
+              >
+                Latitude
+              </label>
+              <input
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                id="latitude"
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    latitude: event.target.value,
+                  }))
+                }
+                placeholder="Example: 51.5074"
+                type="number"
+                value={form.latitude}
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <label
+                className="text-sm font-semibold text-slate-700"
+                htmlFor="longitude"
+              >
+                Longitude
+              </label>
+              <input
+                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+                id="longitude"
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    longitude: event.target.value,
+                  }))
+                }
+                placeholder="Example: -0.1278"
+                type="number"
+                value={form.longitude}
+              />
+            </div>
+          </div>
+
+          {savedReport ? (
+            <div className="mt-6 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+              Report saved successfully. Public report ID:{" "}
+              <span className="font-semibold">{savedReport.public_id}</span>
+            </div>
+          ) : null}
+
+          {saveError ? (
+            <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              {saveError}
+            </div>
+          ) : null}
+
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <Button variant="secondary">
+            <Button disabled={isSaving} onClick={saveReport} variant="secondary">
               <FileCheck2 aria-hidden="true" className="h-4 w-4" />
-              Save report
+              {isSaving ? "Saving" : "Save report"}
             </Button>
             <Button variant="secondary">
               <Download aria-hidden="true" className="h-4 w-4" />
@@ -249,4 +402,3 @@ export default function ResultsPage() {
     </AppShell>
   );
 }
-

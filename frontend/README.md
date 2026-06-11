@@ -2,7 +2,7 @@
 
 The Pavementa frontend is a premium civic-tech SaaS interface for road infrastructure intelligence. It provides the application foundation for dashboards, image intake, reports, map planning, and organisation settings.
 
-Stage 5 connects the upload page to the FastAPI prototype YOLO detection endpoint. Persistence, authentication, real maps, and custom road-damage model training remain deferred.
+Stage 7 connects detection results to the FastAPI report persistence endpoints. Authentication, real maps, PDF export, and custom road-damage model training remain deferred.
 
 ## Technology
 
