@@ -4,15 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import {
-  AlertCircle,
   CheckCircle2,
   FileImage,
+  Loader2,
   MapPin,
   ShieldCheck,
   UploadCloud,
 } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { ErrorState } from "@/components/ErrorState";
+import { FormField } from "@/components/FormField";
+import { TextArea } from "@/components/TextArea";
 import type { DetectionResult, DetectionSeverity } from "@/lib/detection-result";
 
 type CitizenForm = {
@@ -180,6 +183,11 @@ export default function PublicReportPage() {
             <p className="mt-4 text-base leading-7 text-slate-600">
               Your report has been submitted for review.
             </p>
+            <div className="mx-auto mt-6 max-w-md rounded-lg border border-slate-200 bg-slate-50 p-4 text-left text-sm leading-6 text-slate-600">
+              Keep this reference number for updates. The public tracking page
+              only shows safe status information and does not display officer
+              notes or personal contact details.
+            </div>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Button href={`/public/track/${submittedId}`}>
                 Track report
@@ -272,93 +280,63 @@ export default function PublicReportPage() {
                 </p>
               </div>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">
-                  Road or location name
-                </span>
-                <input
-                  className="mt-2 h-12 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-infrastructure-green focus:ring-2 focus:ring-infrastructure-green/15"
-                  onChange={(event) =>
-                    updateField("location_name", event.target.value)
-                  }
-                  placeholder="Example: High Street near library"
-                  required
-                  value={form.location_name}
-                />
-              </label>
+              <FormField
+                label="Road or location name"
+                onChange={(event) =>
+                  updateField("location_name", event.target.value)
+                }
+                placeholder="Example: High Street near library"
+                required
+                value={form.location_name}
+              />
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Latitude
-                  </span>
-                  <input
-                    className="mt-2 h-12 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-infrastructure-green focus:ring-2 focus:ring-infrastructure-green/15"
-                    inputMode="decimal"
-                    onChange={(event) => updateField("latitude", event.target.value)}
-                    placeholder="Optional"
-                    value={form.latitude}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Longitude
-                  </span>
-                  <input
-                    className="mt-2 h-12 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-infrastructure-green focus:ring-2 focus:ring-infrastructure-green/15"
-                    inputMode="decimal"
-                    onChange={(event) =>
-                      updateField("longitude", event.target.value)
-                    }
-                    placeholder="Optional"
-                    value={form.longitude}
-                  />
-                </label>
+                <FormField
+                  inputMode="decimal"
+                  label="Latitude"
+                  onChange={(event) => updateField("latitude", event.target.value)}
+                  placeholder="Optional"
+                  value={form.latitude}
+                />
+                <FormField
+                  inputMode="decimal"
+                  label="Longitude"
+                  onChange={(event) =>
+                    updateField("longitude", event.target.value)
+                  }
+                  placeholder="Optional"
+                  value={form.longitude}
+                />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Full name
-                  </span>
-                  <input
-                    className="mt-2 h-12 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-infrastructure-green focus:ring-2 focus:ring-infrastructure-green/15"
-                    onChange={(event) =>
-                      updateField("citizen_name", event.target.value)
-                    }
-                    placeholder="Optional"
-                    value={form.citizen_name}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Email
-                  </span>
-                  <input
-                    className="mt-2 h-12 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-infrastructure-green focus:ring-2 focus:ring-infrastructure-green/15"
-                    onChange={(event) =>
-                      updateField("citizen_email", event.target.value)
-                    }
-                    placeholder="Optional"
-                    type="email"
-                    value={form.citizen_email}
-                  />
-                </label>
+                <FormField
+                  label="Full name"
+                  onChange={(event) =>
+                    updateField("citizen_name", event.target.value)
+                  }
+                  placeholder="Optional"
+                  value={form.citizen_name}
+                />
+                <FormField
+                  label="Email"
+                  onChange={(event) =>
+                    updateField("citizen_email", event.target.value)
+                  }
+                  placeholder="Optional"
+                  type="email"
+                  value={form.citizen_email}
+                />
               </div>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">
-                  Damage description
-                </span>
-                <textarea
-                  className="mt-2 min-h-28 w-full rounded-md border border-slate-200 px-3 py-3 text-sm outline-none focus:border-infrastructure-green focus:ring-2 focus:ring-infrastructure-green/15"
-                  onChange={(event) =>
-                    updateField("citizen_description", event.target.value)
-                  }
-                  placeholder="Optional details such as lane, direction, or hazard context"
-                  value={form.citizen_description}
-                />
-              </label>
+              <TextArea
+                label="Damage description"
+                onChange={(event) =>
+                  updateField("citizen_description", event.target.value)
+                }
+                placeholder="Optional details such as lane, direction, or hazard context"
+                value={form.citizen_description}
+              />
 
               <div
                 className={`rounded-lg border-2 border-dashed p-4 transition ${
@@ -423,16 +401,18 @@ export default function PublicReportPage() {
               ) : null}
 
               {error ? (
-                <div className="flex gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-800">
-                  <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4" />
-                  {error}
-                </div>
+                <ErrorState message={error} title="Report could not be submitted" />
               ) : null}
 
               <Button className="w-full" disabled={isSubmitting} type="submit">
-                {isSubmitting
-                  ? "Submitting report"
-                  : "Submit road damage report"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                    Submitting report
+                  </>
+                ) : (
+                  "Submit road damage report"
+                )}
               </Button>
             </form>
           </Card>

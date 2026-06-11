@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
-import { AlertCircle, ArrowLeft, CheckCircle2, Clock, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { StatusBadge } from "@/components/StatusBadge";
 import { formatDateTime, formatStatus } from "@/lib/reports";
 
 type PublicTrackPageProps = {
@@ -85,27 +88,18 @@ export default function PublicTrackPage({ params }: PublicTrackPageProps) {
         </Link>
 
         {isLoading ? (
-          <Card className="mt-8 p-6">
-            <p className="text-sm text-slate-600">Loading report status...</p>
-          </Card>
+          <LoadingState className="mt-8" message="Loading report status..." />
         ) : null}
 
         {!isLoading && (error || !report) ? (
           <Card className="mt-8 p-6">
-            <div className="flex gap-3">
-              <AlertCircle aria-hidden="true" className="mt-1 h-5 w-5 text-red-600" />
-              <div>
-                <h1 className="text-xl font-semibold text-slate-950">
-                  Report unavailable
-                </h1>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {error ?? "This public report could not be found."}
-                </p>
-                <Button className="mt-5" href="/public/report" variant="secondary">
-                  Submit a new report
-                </Button>
-              </div>
-            </div>
+            <ErrorState
+              message={error ?? "This public report could not be found."}
+              title="Report unavailable"
+            />
+            <Button className="mt-5" href="/public/report" variant="secondary">
+              Submit a new report
+            </Button>
           </Card>
         ) : null}
 
@@ -133,9 +127,9 @@ export default function PublicTrackPage({ params }: PublicTrackPageProps) {
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                     Status
                   </p>
-                  <p className="mt-2 text-lg font-semibold capitalize text-slate-950">
-                    {formatStatus(report.status)}
-                  </p>
+                  <div className="mt-3">
+                    <StatusBadge status={report.status} />
+                  </div>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">

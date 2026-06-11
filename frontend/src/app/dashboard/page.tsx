@@ -14,6 +14,9 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { PageHeader } from "@/components/PageHeader";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { StatCard } from "@/components/StatCard";
 import type { AnalyticsSummary } from "@/lib/analytics";
@@ -102,14 +105,14 @@ function ReportList({
                   </p>
                   <p className="mt-1 text-sm text-slate-600">{report.title}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    {report.location_name ?? "Location not specified"} ·{" "}
+                    {report.location_name ?? "Location not specified"} -{" "}
                     {formatDate(report.created_at)}
                   </p>
                 </div>
                 <SeverityBadge severity={report.overall_severity} />
               </div>
               <p className="mt-3 text-xs text-slate-500">
-                Priority {report.priority} · Road health{" "}
+                Priority {report.priority} - Road health{" "}
                 {report.road_health_score.toFixed(1)}
               </p>
             </Link>
@@ -171,17 +174,11 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <Card className="p-6">
-          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-950">
-                Analytics Dashboard
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                Council-level insight across saved infrastructure reports,
-                active cases, priorities, and road condition risk.
-              </p>
-            </div>
+        <PageHeader
+          eyebrow="Council intelligence"
+          title="Analytics Dashboard"
+          description="Council-level insight across saved infrastructure reports, active cases, priorities, and road condition risk."
+          actions={
             <Button
               disabled={isLoading}
               onClick={() => {
@@ -195,21 +192,15 @@ export default function DashboardPage() {
               />
               Refresh
             </Button>
-          </div>
-        </Card>
+          }
+        />
 
         {isLoading ? (
-          <Card className="p-6">
-            <p className="text-sm text-slate-600">Loading analytics...</p>
-          </Card>
+          <LoadingState message="Loading analytics..." />
         ) : null}
 
         {!isLoading && error ? (
-          <Card className="p-6">
-            <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-              {error}
-            </div>
-          </Card>
+          <ErrorState message={error} title="Analytics unavailable" />
         ) : null}
 
         {!isLoading && !error && summary && summary.total_reports === 0 ? (
@@ -291,4 +282,3 @@ export default function DashboardPage() {
     </AppShell>
   );
 }
-

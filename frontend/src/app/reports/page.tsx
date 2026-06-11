@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, FileText, RefreshCw, Search } from "lucide-react";
+import { FileText, RefreshCw, Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { PageHeader } from "@/components/PageHeader";
+import { PriorityBadge } from "@/components/PriorityBadge";
+import { SelectField } from "@/components/SelectField";
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { StatusBadge } from "@/components/StatusBadge";
 import type { ReportListItem, ReportSortValue } from "@/lib/reports";
 import { formatDate, formatStatus } from "@/lib/reports";
 
@@ -79,17 +85,11 @@ export default function ReportsPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <Card className="p-6">
-          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-950">
-                Damage Registry
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                Search, filter, and review saved infrastructure damage records
-                from the Pavementa reporting database.
-              </p>
-            </div>
+        <PageHeader
+          eyebrow="Official records"
+          title="Damage Registry"
+          description="Search, filter, and review saved infrastructure damage records from the Pavementa reporting database."
+          actions={
             <Button
               disabled={isLoading}
               onClick={() => {
@@ -103,8 +103,10 @@ export default function ReportsPage() {
               />
               Refresh
             </Button>
-          </div>
+          }
+        />
 
+        <Card className="p-6">
           <div className="mt-6 grid gap-4 lg:grid-cols-[1.3fr_0.7fr_0.7fr_0.9fr]">
             <label className="block">
               <span className="text-sm font-semibold text-slate-700">
@@ -122,12 +124,9 @@ export default function ReportsPage() {
               </div>
             </label>
 
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-700">
-                Severity
-              </span>
-              <select
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm capitalize text-slate-900"
+            <SelectField
+              className="capitalize"
+              label="Severity"
                 onChange={(event) => setSeverity(event.target.value)}
                 value={severity}
               >
@@ -136,15 +135,11 @@ export default function ReportsPage() {
                     {option}
                   </option>
                 ))}
-              </select>
-            </label>
+            </SelectField>
 
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-700">
-                Status
-              </span>
-              <select
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm capitalize text-slate-900"
+            <SelectField
+              className="capitalize"
+              label="Status"
                 onChange={(event) => setStatus(event.target.value)}
                 value={status}
               >
@@ -153,13 +148,10 @@ export default function ReportsPage() {
                     {formatStatus(option)}
                   </option>
                 ))}
-              </select>
-            </label>
+            </SelectField>
 
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-700">Sort</span>
-              <select
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900"
+            <SelectField
+              label="Sort"
                 onChange={(event) =>
                   setSort(event.target.value as ReportSortValue)
                 }
@@ -170,8 +162,7 @@ export default function ReportsPage() {
                     {option.label}
                   </option>
                 ))}
-              </select>
-            </label>
+            </SelectField>
           </div>
         </Card>
 
@@ -188,21 +179,13 @@ export default function ReportsPage() {
 
           {isLoading ? (
             <div className="p-6">
-              <div className="rounded-md border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-                Loading saved reports...
-              </div>
+              <LoadingState message="Loading saved reports..." />
             </div>
           ) : null}
 
           {!isLoading && error ? (
             <div className="p-6">
-              <div className="flex gap-3 rounded-md border border-red-200 bg-red-50 p-5 text-sm text-red-800">
-                <AlertCircle
-                  aria-hidden="true"
-                  className="mt-0.5 h-5 w-5 shrink-0"
-                />
-                <p>{error}</p>
-              </div>
+              <ErrorState message={error} title="Registry unavailable" />
             </div>
           ) : null}
 
@@ -250,14 +233,14 @@ export default function ReportsPage() {
                       <td className="px-6 py-4">
                         <SeverityBadge severity={report.overall_severity} />
                       </td>
-                      <td className="px-6 py-4 capitalize text-slate-700">
-                        {report.priority}
+                      <td className="px-6 py-4">
+                        <PriorityBadge priority={report.priority} />
                       </td>
                       <td className="px-6 py-4 text-slate-700">
                         {report.road_health_score.toFixed(1)}
                       </td>
-                      <td className="px-6 py-4 capitalize text-slate-700">
-                        {formatStatus(report.status)}
+                      <td className="px-6 py-4">
+                        <StatusBadge status={report.status} />
                       </td>
                       <td className="px-6 py-4 text-slate-500">
                         {formatDate(report.created_at)}

@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { FormField } from "@/components/FormField";
 
 export default function PublicTrackLookupPage() {
   const [publicId, setPublicId] = useState("");
@@ -34,17 +35,13 @@ export default function PublicTrackLookupPage() {
             Enter the public reference number provided after submission.
           </p>
           <form className="mt-6 space-y-4" onSubmit={submitLookup}>
-            <label className="block">
-              <span className="text-sm font-semibold text-slate-700">
-                Public report ID
-              </span>
-              <input
-                className="mt-2 h-12 w-full rounded-md border border-slate-200 px-3 text-sm uppercase outline-none focus:border-infrastructure-green focus:ring-2 focus:ring-infrastructure-green/15"
-                onChange={(event) => setPublicId(event.target.value)}
-                placeholder="PAV-2026-0001"
-                value={publicId}
-              />
-            </label>
+            <FormField
+              className="uppercase"
+              label="Public report ID"
+              onChange={(event) => setPublicId(event.target.value)}
+              placeholder="PAV-2026-0001"
+              value={publicId}
+            />
             <Button className="w-full" type="submit">
               Track report
             </Button>

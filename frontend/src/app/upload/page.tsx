@@ -10,11 +10,12 @@ import {
   MapPin,
   SearchCheck,
   UploadCloud,
-  XCircle,
 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { ErrorState } from "@/components/ErrorState";
+import { PageHeader } from "@/components/PageHeader";
 import {
   DETECTION_RESULT_STORAGE_KEY,
   type DetectionResult,
@@ -194,6 +195,13 @@ export default function UploadPage() {
 
   return (
     <AppShell>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Evidence intake"
+          title="Image Intake"
+          description="Upload road inspection images for secure storage or prototype AI review before saving an official report."
+        />
+
       <div className="grid gap-6 xl:grid-cols-[1fr_0.75fr]">
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-slate-950">
@@ -344,10 +352,11 @@ export default function UploadPage() {
           ) : null}
 
           {error ? (
-            <div className="mt-6 flex gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-red-800">
-              <XCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
-              <p className="text-sm leading-6">{error}</p>
-            </div>
+            <ErrorState
+              className="mt-6"
+              message={error}
+              title="Image intake failed"
+            />
           ) : null}
 
           {uploadResult ? (
@@ -405,6 +414,7 @@ export default function UploadPage() {
             </Button>
           </div>
         </Card>
+      </div>
       </div>
 
     </AppShell>

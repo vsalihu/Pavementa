@@ -13,6 +13,9 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { FormField } from "@/components/FormField";
+import { MetricCard } from "@/components/MetricCard";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import {
   DETECTION_RESULT_STORAGE_KEY,
@@ -189,22 +192,14 @@ export default function ResultsPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="p-5">
-            <p className="text-sm font-medium text-slate-500">
-              Total detections
-            </p>
-            <p className="mt-3 text-3xl font-semibold text-slate-950">
-              {result.summary.total_detections}
-            </p>
-          </Card>
-          <Card className="p-5">
-            <p className="text-sm font-medium text-slate-500">
-              Highest confidence
-            </p>
-            <p className="mt-3 text-3xl font-semibold text-slate-950">
-              {formatConfidence(result.summary.highest_confidence)}
-            </p>
-          </Card>
+          <MetricCard
+            label="Total detections"
+            value={String(result.summary.total_detections)}
+          />
+          <MetricCard
+            label="Highest confidence"
+            value={formatConfidence(result.summary.highest_confidence)}
+          />
           <Card className="p-5">
             <p className="text-sm font-medium text-slate-500">
               Overall severity
@@ -285,15 +280,9 @@ export default function ResultsPage() {
 
           <div className="mt-6 grid gap-4 lg:grid-cols-4">
             <div className="lg:col-span-2">
-              <label
-                className="text-sm font-semibold text-slate-700"
-                htmlFor="report-title"
-              >
-                Report title
-              </label>
-              <input
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+              <FormField
                 id="report-title"
+                label="Report title"
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
@@ -306,15 +295,9 @@ export default function ResultsPage() {
               />
             </div>
             <div className="lg:col-span-2">
-              <label
-                className="text-sm font-semibold text-slate-700"
-                htmlFor="location-name"
-              >
-                Location name
-              </label>
-              <input
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+              <FormField
                 id="location-name"
+                label="Location name"
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
@@ -327,15 +310,9 @@ export default function ResultsPage() {
               />
             </div>
             <div className="lg:col-span-2">
-              <label
-                className="text-sm font-semibold text-slate-700"
-                htmlFor="latitude"
-              >
-                Latitude
-              </label>
-              <input
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+              <FormField
                 id="latitude"
+                label="Latitude"
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
@@ -348,15 +325,9 @@ export default function ResultsPage() {
               />
             </div>
             <div className="lg:col-span-2">
-              <label
-                className="text-sm font-semibold text-slate-700"
-                htmlFor="longitude"
-              >
-                Longitude
-              </label>
-              <input
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
+              <FormField
                 id="longitude"
+                label="Longitude"
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
@@ -378,9 +349,11 @@ export default function ResultsPage() {
           ) : null}
 
           {saveError ? (
-            <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-              {saveError}
-            </div>
+            <ErrorState
+              className="mt-6"
+              message={saveError}
+              title="Report could not be saved"
+            />
           ) : null}
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">

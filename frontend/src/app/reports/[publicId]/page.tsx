@@ -17,7 +17,11 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { PriorityBadge } from "@/components/PriorityBadge";
 import { SeverityBadge } from "@/components/SeverityBadge";
+import { StatusBadge } from "@/components/StatusBadge";
 import type { ReportRead } from "@/lib/reports";
 import {
   formatConfidence,
@@ -125,9 +129,7 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
   if (isLoading) {
     return (
       <AppShell>
-        <Card className="p-6">
-          <p className="text-sm text-slate-600">Loading official report...</p>
-        </Card>
+        <LoadingState message="Loading official report..." />
       </AppShell>
     );
   }
@@ -303,9 +305,8 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
           </div>
           <div className="flex flex-wrap gap-2">
             <SeverityBadge severity={report.overall_severity} />
-            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold capitalize text-slate-700">
-              {formatStatus(report.status)}
-            </span>
+            <StatusBadge status={report.status} />
+            <PriorityBadge priority={report.priority} />
           </div>
         </div>
 
@@ -344,9 +345,11 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
             </div>
           </div>
           {exportError ? (
-            <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-              {exportError}
-            </div>
+            <ErrorState
+              className="mt-4"
+              message={exportError}
+              title="Export failed"
+            />
           ) : null}
         </Card>
 
@@ -523,9 +526,11 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
             </div>
           ) : null}
           {caseError ? (
-            <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-              {caseError}
-            </div>
+            <ErrorState
+              className="mt-5"
+              message={caseError}
+              title="Case update failed"
+            />
           ) : null}
 
           <div className="mt-8 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">

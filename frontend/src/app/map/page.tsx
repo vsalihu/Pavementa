@@ -5,11 +5,14 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import { AlertCircle, MapPinned, RefreshCw } from "lucide-react";
+import { MapPinned, RefreshCw } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { PageHeader } from "@/components/PageHeader";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import type { ReportListItem } from "@/lib/reports";
 
@@ -194,18 +197,12 @@ export default function MapPage() {
 
   return (
     <AppShell>
-      <div className="grid gap-6 xl:grid-cols-[1fr_24rem]">
-        <Card className="overflow-hidden">
-          <div className="flex flex-col justify-between gap-4 border-b border-slate-200 p-6 lg:flex-row lg:items-center">
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-950">
-                Road Condition GIS Map
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                Spatial view of saved damage reports with valid latitude and
-                longitude coordinates.
-              </p>
-            </div>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Spatial intelligence"
+          title="Road Condition GIS Map"
+          description="Spatial view of saved damage reports with valid latitude and longitude coordinates."
+          actions={
             <Button
               disabled={isLoading}
               onClick={() => {
@@ -219,25 +216,25 @@ export default function MapPage() {
               />
               Refresh
             </Button>
-          </div>
+          }
+        />
 
+      <div className="grid gap-6 xl:grid-cols-[1fr_24rem]">
+        <Card className="overflow-hidden">
           <div className="p-6">
             {isLoading ? (
-              <div className="flex min-h-[620px] items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-600">
-                Loading mapped reports...
-              </div>
+              <LoadingState
+                className="min-h-[520px] lg:min-h-[620px]"
+                message="Loading mapped reports..."
+              />
             ) : null}
 
             {!isLoading && error ? (
-              <div className="flex min-h-[620px] items-center justify-center rounded-lg border border-red-200 bg-red-50 p-6 text-red-800">
-                <div className="flex max-w-md gap-3 text-sm leading-6">
-                  <AlertCircle
-                    aria-hidden="true"
-                    className="mt-0.5 h-5 w-5 shrink-0"
-                  />
-                  <p>{error}</p>
-                </div>
-              </div>
+              <ErrorState
+                className="min-h-[520px] items-center lg:min-h-[620px]"
+                message={error}
+                title="Map data unavailable"
+              />
             ) : null}
 
             {!isLoading && !error && missingToken ? (
@@ -260,7 +257,7 @@ export default function MapPage() {
 
             {!isLoading && !error && !missingToken && mappedReports.length > 0 ? (
               <div
-                className="min-h-[620px] overflow-hidden rounded-lg border border-slate-200"
+                className="min-h-[520px] overflow-hidden rounded-lg border border-slate-200 lg:min-h-[620px]"
                 ref={mapContainerRef}
               />
             ) : null}
@@ -324,7 +321,7 @@ export default function MapPage() {
                       <SeverityBadge severity={report.overall_severity} />
                     </div>
                     <p className="mt-3 text-xs text-slate-500">
-                      Road health {report.road_health_score.toFixed(1)} ·{" "}
+                      Road health {report.road_health_score.toFixed(1)} -{" "}
                       {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
                     </p>
                   </Link>
@@ -337,6 +334,7 @@ export default function MapPage() {
             </div>
           </Card>
         </aside>
+      </div>
       </div>
     </AppShell>
   );

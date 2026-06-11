@@ -30,8 +30,21 @@ body {
 
 button,
 a,
-input {
+input,
+select,
+textarea {
   outline-color: var(--green);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select,
+textarea {
+  color-scheme: light;
 }
 
 ::selection {

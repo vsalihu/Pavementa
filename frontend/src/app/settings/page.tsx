@@ -1,44 +1,37 @@
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { FormField } from "@/components/FormField";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function SettingsPage() {
   return (
     <AppShell>
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Workspace configuration"
+          title="Organisation Settings"
+          description="Manage the organisation profile and operational notification preferences for the Pavementa workspace."
+        />
+
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-slate-950">
             Organisation profile
           </h2>
           <div className="mt-6 space-y-5">
-            <div>
-              <label
-                className="text-sm font-semibold text-slate-700"
-                htmlFor="organisation"
-              >
-                Organisation name
-              </label>
-              <input
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
-                id="organisation"
-                placeholder="Example: Northshire Council"
-                type="text"
-              />
-            </div>
-            <div>
-              <label
-                className="text-sm font-semibold text-slate-700"
-                htmlFor="email"
-              >
-                Contact email
-              </label>
-              <input
-                className="mt-2 h-11 w-full rounded-md border border-slate-200 px-3 text-sm"
-                id="email"
-                placeholder="infrastructure@example.gov.uk"
-                type="email"
-              />
-            </div>
+            <FormField
+              id="organisation"
+              label="Organisation name"
+              placeholder="Example: Northshire Council"
+              type="text"
+            />
+            <FormField
+              id="email"
+              label="Contact email"
+              placeholder="infrastructure@example.gov.uk"
+              type="email"
+            />
           </div>
           <Button className="mt-6">Save settings</Button>
         </Card>
@@ -70,7 +63,7 @@ export default function SettingsPage() {
           </div>
         </Card>
       </div>
+      </div>
     </AppShell>
   );
 }
-

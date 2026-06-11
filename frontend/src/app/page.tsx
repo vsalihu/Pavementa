@@ -79,7 +79,10 @@ export default function Home() {
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </Button>
               <Button href="/reports" variant="secondary">
-                Review mock reports
+                Review damage registry
+              </Button>
+              <Button href="/public/report" variant="secondary">
+                Public reporting
               </Button>
             </div>
           </div>
@@ -182,4 +185,3 @@ export default function Home() {
     </main>
   );
 }
-
