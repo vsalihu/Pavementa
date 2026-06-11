@@ -72,6 +72,7 @@ frontend/
 - `/results` detection results review workspace
 - `/reports` searchable Damage Registry backed by the API
 - `/reports/[publicId]` detailed official infrastructure report view
+- `/reports/[publicId]` also supports PDF and CSV report downloads
 - `/map` placeholder GIS map page
 - `/settings` organisation settings mock
 

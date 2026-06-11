@@ -10,3 +10,4 @@ numpy
 sqlalchemy
 alembic
 psycopg[binary]
+reportlab

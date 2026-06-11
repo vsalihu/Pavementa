@@ -3,15 +3,32 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response
 from sqlalchemy import asc, desc, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
 from app.models.report import Report
 from app.schemas.report import ReportCreate, ReportListItem, ReportRead
+from app.services.export_service import build_csv_report, build_pdf_report
 from app.services.report_service import create_report
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
+
+
+def fetch_report_or_404(public_id: str, db: Session) -> Report:
+    """Fetch one report with detections or raise a 404 response."""
+    report = db.scalar(
+        select(Report)
+        .where(Report.public_id == public_id)
+        .options(selectinload(Report.detections))
+    )
+    if report is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Report not found.",
+        )
+    return report
 
 
 @router.post("", response_model=ReportRead, status_code=status.HTTP_201_CREATED)
@@ -60,14 +77,32 @@ def list_reports(
 @router.get("/{public_id}", response_model=ReportRead)
 def get_report(public_id: str, db: Session = Depends(get_db)) -> Report:
     """Return one report and its detections by public identifier."""
-    report = db.scalar(
-        select(Report)
-        .where(Report.public_id == public_id)
-        .options(selectinload(Report.detections))
+    return fetch_report_or_404(public_id, db)
+
+
+@router.get("/{public_id}/export/pdf")
+def export_report_pdf(public_id: str, db: Session = Depends(get_db)) -> Response:
+    """Download a council-ready PDF export for one report."""
+    report = fetch_report_or_404(public_id, db)
+    pdf_bytes = build_pdf_report(report)
+    filename = f"{report.public_id}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
-    if report is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Report not found.",
-        )
-    return report
+
+
+@router.get("/{public_id}/export/csv")
+def export_report_csv(public_id: str, db: Session = Depends(get_db)) -> Response:
+    """Download a CSV export for one report."""
+    report = fetch_report_or_404(public_id, db)
+    csv_text = build_csv_report(report)
+    filename = f"{report.public_id}.csv"
+
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

@@ -3,8 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
-import { AlertCircle, ArrowLeft, ClipboardList, MapPin } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ClipboardList,
+  Download,
+  FileSpreadsheet,
+  MapPin,
+} from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { SeverityBadge } from "@/components/SeverityBadge";
@@ -29,6 +37,8 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
   const [report, setReport] = useState<ReportRead | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<"pdf" | "csv" | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -91,6 +101,50 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
   const hasCoordinates =
     typeof report.latitude === "number" && typeof report.longitude === "number";
 
+  async function downloadExport(format: "pdf" | "csv") {
+    if (!report) {
+      return;
+    }
+
+    setExporting(format);
+    setExportError(null);
+
+    try {
+      const response = await fetch(
+        `${apiUrl.replace(/\/$/, "")}/api/reports/${report.public_id}/export/${format}`
+      );
+
+      if (!response.ok) {
+        let message = `Could not export ${format.toUpperCase()} report.`;
+        try {
+          const data = await response.json();
+          message = data.detail ?? message;
+        } catch {
+          // Keep default message for non-JSON errors.
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${report.public_id}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (downloadError) {
+      setExportError(
+        downloadError instanceof Error
+          ? downloadError.message
+          : "Could not export report. Check the backend connection."
+      );
+    } finally {
+      setExporting(null);
+    }
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -117,6 +171,47 @@ export default function ReportDetailPage({ params }: ReportDetailPageProps) {
             </span>
           </div>
         </div>
+
+        <Card className="p-5">
+          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-950">
+                Council-ready exports
+              </h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Download the saved report as a professional PDF or structured
+                CSV for review and record keeping.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                disabled={exporting !== null}
+                onClick={() => {
+                  void downloadExport("pdf");
+                }}
+                variant="secondary"
+              >
+                <Download aria-hidden="true" className="h-4 w-4" />
+                {exporting === "pdf" ? "Exporting PDF" : "Export PDF"}
+              </Button>
+              <Button
+                disabled={exporting !== null}
+                onClick={() => {
+                  void downloadExport("csv");
+                }}
+                variant="secondary"
+              >
+                <FileSpreadsheet aria-hidden="true" className="h-4 w-4" />
+                {exporting === "csv" ? "Exporting CSV" : "Export CSV"}
+              </Button>
+            </div>
+          </div>
+          {exportError ? (
+            <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              {exportError}
+            </div>
+          ) : null}
+        </Card>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card className="p-5">

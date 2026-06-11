@@ -121,3 +121,11 @@ Returns saved reports with optional query parameters:
 `GET /api/reports/{public_id}`
 
 Returns one saved report with its detections.
+
+`GET /api/reports/{public_id}/export/pdf`
+
+Downloads a council-ready PDF report generated with ReportLab.
+
+`GET /api/reports/{public_id}/export/csv`
+
+Downloads a CSV export containing report metadata and detection rows.
