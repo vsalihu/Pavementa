@@ -11,6 +11,8 @@ export type ReportListItem = {
   public_id: string;
   title: string;
   location_name: string | null;
+  latitude: number | null;
+  longitude: number | null;
   status: string;
   overall_severity: "low" | "medium" | "high" | "critical";
   road_health_score: number;
@@ -22,8 +24,6 @@ export type ReportListItem = {
 export type ReportRead = ReportListItem & {
   original_image_url: string;
   annotated_image_url: string;
-  latitude: number | null;
-  longitude: number | null;
   updated_at: string;
   detections: Array<{
     id: number;

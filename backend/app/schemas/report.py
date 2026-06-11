@@ -59,6 +59,8 @@ class ReportListItem(BaseModel):
     public_id: str
     title: str
     location_name: str | None
+    latitude: float | None
+    longitude: float | None
     status: str
     overall_severity: str
     road_health_score: float
@@ -74,10 +76,7 @@ class ReportRead(ReportListItem):
 
     original_image_url: str
     annotated_image_url: str
-    latitude: float | None
-    longitude: float | None
     updated_at: datetime
     detections: list[DetectionRead]
 
     model_config = {"from_attributes": True}
-

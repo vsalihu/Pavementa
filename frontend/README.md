@@ -78,3 +78,4 @@ frontend/
 ## Environment
 
 - `NEXT_PUBLIC_API_URL` controls the FastAPI backend URL used by uploads
+- `NEXT_PUBLIC_MAPBOX_TOKEN` enables the interactive Mapbox GIS view
